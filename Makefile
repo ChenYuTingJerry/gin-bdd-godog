@@ -3,3 +3,6 @@ run:
 
 test:
 	godog run --format=pretty
+
+ginkgo-test:
+	ginkgo -r
