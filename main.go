@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/ChenYuTingJerry/gin-bdd-godog/api"
 	"github.com/sirupsen/logrus"
+
+	"github.com/ChenYuTingJerry/gin-bdd-godog/api"
 )
 
 func main() {
