@@ -1,5 +1,5 @@
 @version
-Feature: get version
+Feature: Version
   In order to know service version
   As an API user
   I need to be able to request version
@@ -10,9 +10,9 @@ Feature: get version
     And the response should match json:
       """
       {
-        "version": "v1.0.0"
+        "version": "<version>"
       }
       """
     Examples:
-      | status |
-      | 200    |
+      | status | version |
+      | 200    | v1.0.0  |
