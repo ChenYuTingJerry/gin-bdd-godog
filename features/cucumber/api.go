@@ -1,4 +1,4 @@
-package api
+package cucumber
 
 import (
 	"context"
@@ -6,35 +6,30 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
 	"github.com/cucumber/godog"
 	"github.com/gin-gonic/gin"
-	"github.com/onsi/gomega"
-	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/ChenYuTingJerry/gin-bdd-godog/api"
 )
 
 type apiFeature struct {
 	router   *gin.Engine
 	recorder *httptest.ResponseRecorder
+	testing  testing.T
+	assert   *assert.Assertions
 }
 
 func (a *apiFeature) reset() {
-	a.router = SetRouter()
+	a.router = api.SetRouter()
 	a.recorder = httptest.NewRecorder()
+	a.assert = assert.New(&a.testing)
 }
 
-func (a *apiFeature) iSendGETRequestToVersion() error {
-	req, err := http.NewRequest("GET", "/version", nil)
-	if err != nil {
-		return err
-	}
-
-	a.router.ServeHTTP(a.recorder, req)
-	return nil
-}
-
-func (a *apiFeature) iSendGETRequestToHealth() error {
-	req, err := http.NewRequest("GET", "/health", nil)
+func (a *apiFeature) clientSendRequestTo(method, url string) error {
+	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		return err
 	}
@@ -50,26 +45,21 @@ func (a *apiFeature) theResponseCodeShouldBe(code int) error {
 	return nil
 }
 
-func (a *apiFeature) theResponseShouldMatchJson(body *godog.DocString) (err error) {
-	defer failHandler(&err)
+func (a *apiFeature) theResponseShouldMatchJson(body *godog.DocString) error {
 	want := map[string]interface{}{}
 	actual := map[string]interface{}{}
 	json.Unmarshal([]byte(body.Content), &want)
 	json.Unmarshal(a.recorder.Body.Bytes(), &actual)
-	gomega.Ω(actual).Should(gomega.Equal(want))
-	return err
+	if !a.assert.Equal(want, actual) {
+		return fmt.Errorf("response not match. want: %s, actual: %s", want, actual)
+	}
+	return nil
 }
 
-func failHandler(err *error) {
-	if r := recover(); r != nil {
-		*err = fmt.Errorf("%s", r)
-	}
-}
 func InitializeScenario(ctx *godog.ScenarioContext) {
 	api := &apiFeature{}
 
 	ctx.Before(func(c context.Context, s *godog.Scenario) (context.Context, error) {
-		logrus.Info("before")
 		api.reset()
 		return c, nil
 	})
@@ -78,13 +68,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 		return c, err
 	})
 
-	gomega.RegisterFailHandler(func(message string, _ ...int) {
-		panic(message)
-	})
-
-	ctx.Step(`^I send GET request to \/version$`, api.iSendGETRequestToVersion)
-	ctx.Step(`^I send GET request to \/health$`, api.iSendGETRequestToHealth)
-
+	ctx.Step(`^client send "([^"]*)" request to "([^"]*)"$`, api.clientSendRequestTo)
 	ctx.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)
 	ctx.Step(`^the response should match json:$`, api.theResponseShouldMatchJson)
 
