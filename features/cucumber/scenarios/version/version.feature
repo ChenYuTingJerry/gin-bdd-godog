@@ -1,5 +1,5 @@
-@version
-Feature: Version
+@api @version
+Feature: Health API
   In order to know service version
   As an API user
   I need to be able to request version

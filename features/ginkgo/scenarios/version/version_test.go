@@ -11,7 +11,7 @@ import (
 	"github.com/ChenYuTingJerry/gin-bdd-godog/api"
 )
 
-var _ = Describe("Version", func() {
+var _ = Describe("Version API", func() {
 	var request *http.Request
 	var recorder *httptest.ResponseRecorder
 	var router = api.SetRouter()

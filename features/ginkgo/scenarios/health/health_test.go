@@ -12,7 +12,7 @@ import (
 )
 
 //Feature
-var _ = Describe("Health", func() {
+var _ = Describe("Health API", func() {
 	var request *http.Request
 	var recorder *httptest.ResponseRecorder
 	var router = api.SetRouter()
@@ -25,7 +25,7 @@ var _ = Describe("Health", func() {
 	// Scenario
 	Describe("should get ok status", func() {
 		//When
-		When("client send GET request to /health", Label("get"), func() {
+		Context("client send GET request to /health", Label("get"), func() {
 			BeforeEach(func() {
 				router.ServeHTTP(recorder, request)
 			})
@@ -35,7 +35,7 @@ var _ = Describe("Health", func() {
 				Expect(recorder.Code).To(Equal(200))
 			})
 
-			//And
+			//Then
 			It("the response should match json", func() {
 				expectedJsonStr := `{ "status": "ok" }`
 				want := map[string]interface{}{}
