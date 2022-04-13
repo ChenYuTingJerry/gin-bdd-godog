@@ -1,8 +1,11 @@
 run:
 	go run main.go
 
-test:
+godog-test:
 	godog run --format=pretty
 
 ginkgo-test:
 	ginkgo -r
+
+test:
+	go test ./...
