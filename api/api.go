@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 
+	"github.com/ChenYuTingJerry/gin-bdd-godog/api/echo"
 	"github.com/ChenYuTingJerry/gin-bdd-godog/api/health"
 	"github.com/ChenYuTingJerry/gin-bdd-godog/api/version"
 )
@@ -16,5 +17,6 @@ func SetRouter() *gin.Engine {
 	routeGroup := r.Group("/")
 	health.New(routeGroup)
 	version.New(routeGroup)
+	echo.New(routeGroup)
 	return r
 }

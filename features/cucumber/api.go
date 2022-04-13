@@ -6,20 +6,45 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/cucumber/godog"
+	"github.com/cucumber/godog/colors"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ChenYuTingJerry/gin-bdd-godog/api"
 )
+
+var opts = godog.Options{Output: colors.Colored(os.Stdout)}
+
+func init() {
+	godog.BindCommandLineFlags("godog.", &opts)
+}
+
+func TestMain(m *testing.M) {
+	pflag.Parse()
+	opts.Paths = pflag.Args()
+
+	status := godog.TestSuite{
+		Name:                 "godogs",
+		TestSuiteInitializer: InitializeTestSuite,
+		ScenarioInitializer:  InitializeScenario,
+		Options:              &opts,
+	}.Run()
+
+	os.Exit(status)
+}
 
 type apiFeature struct {
 	router   *gin.Engine
 	recorder *httptest.ResponseRecorder
 	testing  testing.T
 	assert   *assert.Assertions
+	reqBody  map[string]interface{}
 }
 
 func (a *apiFeature) reset() {
@@ -29,7 +54,8 @@ func (a *apiFeature) reset() {
 }
 
 func (a *apiFeature) clientSendRequestTo(method, url string) error {
-	req, err := http.NewRequest(method, url, nil)
+	strBody, _ := json.Marshal(a.reqBody)
+	req, err := http.NewRequest(method, url, strings.NewReader(string(strBody)))
 	if err != nil {
 		return err
 	}
@@ -56,6 +82,15 @@ func (a *apiFeature) theResponseShouldMatchJson(body *godog.DocString) error {
 	return nil
 }
 
+func (a *apiFeature) clientGiveARequestBody(body *godog.DocString) error {
+	json.Unmarshal([]byte(body.Content), &a.reqBody)
+	return nil
+}
+
+func InitializeTestSuite(ctx *godog.TestSuiteContext) {
+	ctx.BeforeSuite(func() {})
+}
+
 func InitializeScenario(ctx *godog.ScenarioContext) {
 	api := &apiFeature{}
 
@@ -71,5 +106,6 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^client send "([^"]*)" request to "([^"]*)"$`, api.clientSendRequestTo)
 	ctx.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)
 	ctx.Step(`^the response should match json:$`, api.theResponseShouldMatchJson)
+	ctx.Step(`^client give a request body:$`, api.clientGiveARequestBody)
 
 }
